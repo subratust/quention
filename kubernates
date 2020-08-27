@@ -1,0 +1,286 @@
+Kubernetes :
+==========================================
+1) what is taint and toleration 
+Taints are the opposite -- they allow a node to repel a set of pods. Tolerations are applied to pods, 
+and allow (but do not require) the pods to schedule onto nodes with matching taints.
+ Taints and tolerations work together to ensure that pods are not scheduled onto inappropriate nodes
+
+2)stateless application in kubernates
+stateless application has no persistent storage or volume associated with it. From an operations perspective, this is great news.
+
+2) Node affinity is specified as field nodeAffinity of field affinity in the PodSpec. 
+This node affinity rule says the pod can only be placed on a node with a label whose key is kubernetes.io/e2e-az-name and 
+whose value is either e2e-az1 or e2e-az2 .
+
+3) how to check the logs of a pod or deployment?
+kubectl get pods
+ to view the cluster's pods. Copy one of the pod's names, and append it to the 
+kubectl logs -f command
+
+4) kubectl get pods --all-namespaces -o jsonpath="{..image}" |\
+tr -s '[[:space:]]' '\n' |\
+sort |\
+uniq -c
+kubectl logs --previous ${POD_NAME} ${CONTAINER_NAME}
+
+5) what are deployment strategy used in your project
+The rolling deployment is the standard default deployment to Kubernetes. 
+It works by slowly, one by one, replacing pods of the previous version of your application with pods of the new version without any cluster downtime
+
+6) what is init container
+Init Containers are containers that run before the main container runs with your containerized application. They normally contain setup scripts that prepares an environment for you containerized application. 
+Init Containers also ensure the wider server environment is ready for your application to start to run.
+
+7) A stateless application is one which depends on no persistent storage. The only thing your cluster is responsible for is the code, and other static content, being hosted on it. ... A stateful application, 
+on the other hand, has several other parameters it is supposed to look after in the cluster.
+
+8) what is ingress 
+Kubernetesrnetes Ingress is an API object that provides routing rules to manage external users' access to the services in a Kubernetes cluster, typically via HTTPS/HTTP. ... 
+Ingress allows you to configure and manage these capabilities inside the cluster
+
+9) difference between headfull and headless service
+Kubernetes Headless service vs ClusterIP and traffic distribution. 
+Default Kubernetes service type is clusterIP , When you create a headless service by setting clusterIP None , 
+no load-balancing is done and no cluster IP is allocated for this service. Only DNS is automatically configured.
+
+10) difference between secret and configmap 
+The big difference between Secrets and ConfigMaps are that Secrets are obfuscated with a Base64 encoding.
+There may be more differences in the future, but it is good practice to use Secrets for confidential data (like API keys) and 
+ConfigMaps for non-confidential data (like port numbers).
+
+11) what is livenessprobe and readynesspeobe
+Kubernetes uses readiness probes to decide when the container is available for accepting traffic. ...
+ The readiness probe is used to control which pods are used as the backends for a service
+
+Kubernetes liveness and readiness probes can be used to make a service more robust and more resilient, by
+ reducing operational issues and improving the quality of servic
+ 
+12) how to access other pods in a cluster
+services
+Use a service with type NodePort or LoadBalancer to make the service reachable outside the cluster
+
+13) what is a pod
+A Kubernetes pod is a group of containers that are deployed together on the same host. 
+If you frequently deploy single containers, you can generally replace the word "
+Deployments are the most common kind of controller, typically the best choice for stateless pods which can be scheduled anywhere resources are available.
+DaemonSets are appropriate for pods meant to run one per host; these are typically used for daemon-like processes, like log aggregators, filesystem managers,
+ system monitors or other utilities that make sense to have exactly one of on every host in your Kubernetes cluster.
+
+14) how you will make sure that the database should start first and then application
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sequential-jobs
+spec:
+  template:
+    metadata:
+      name: sequential-job
+    spec:
+      initContainers:
+      - name: job-1
+        image: busybox
+        command: ['sh', '-c', 'for i in 1 2 3; do echo "job-1 `date`" && sleep 5s; done;']
+      - name: job-2
+        image: busybox
+        command: ['sh', '-c', 'for i in 1 2 3; do echo "job-2 `date`" && sleep 5s; done;']
+      containers:
+      - name: job-done
+        image: busybox
+        command: ['sh', '-c', 'echo "job-1 and job-2 completed"']
+      restartPolicy: Never
+
+15) Types of storage class used in your project
+How do I check if I have a default StorageClass Installed? You can use kubectl to check for StorageClass objects. 
+In the example below there are two storage classes: “gold” and “standard”. The “gold” class is user-defined, and the “standard” class is installed by Kubernetes
+List the StorageClasses in your cluster:
+
+kubectl get storageclass
+The output is similar to this:
+
+NAME                 PROVISIONER               AGE
+standard (default)   kubernetes.io/gce-pd      1d
+gold    
+This is the storage class that will be used to provision a PV if a user does not specify one in a PVC. You can define a default storage class by setting the annotation storageclass.kubernetes.io/is-default-class t
+o true in the storage class definition
+16) difference between statefullset and stateless
+No voume attached
+
+17) describe kubernetes architecturexy 
+apiserver etcd,cotroller managers,sechdular    docker kubeproxy kubelet
+
+18) difference between PV and pvc
+A PersistentVolume (PV) is a piece of storage in the cluster that has been provisioned by an administrator or dynamically provisioned using Storage Classes. It is a resource in the cluster just like a node is a cluster resource. ... 
+A PersistentVolumeClaim (PVC) is a request for storage by a user. It is similar to a Pod .
+A PersistentVolume (PV) is a piece of storage in the cluster that has been provisioned by an administrator or dynamically provisioned using Storage Classes. It is a resource in the cluster just like a node is a cluster resource. ... A PersistentVolumeClaim (PVC) is a request for storage by a user. It is similar to a Pod.
+
+19) no
+20) Update the password in secret without restarting the pod or deployment ,is it possible ?
+if we r using as liking mouting the voulme not require ,if we r using as env variable 
+
+21) how to rollback the deployment?
+
+22) what is the reason for pod eviction?
+First, kubelet tries to free node resources, especially disk, by deleting dead pods and its containers, and then unused images.
+If this isn’t enough, kubelet starts to evict end-user pods in the following order:
+
+Best Effort.
+Burstable pods using more resources than its request of the starved resource.
+Burstable pods using less resources than its request of the starved resource.
+You can see some messages like these if one of your pods is evicted by memory use:
+
+NAME       READY   STATUS    RESTARTS
+
+22) pod is in pending state ,what are the possible reasons?
+https://kubernetes.io/docs/tasks/debug-application-cluster/debug-application/#:~:text=If%20a%20Pod%20is%20stuck,or%20another%20that%20prevent%20scheduling.&text=If%20you%20do%20require%20hostPort,nodes%20in%20your%20Kubernetes%20cluster.
+Debugging Pods
+Debugging Replication Controllers
+Debugging Services
+Debugging Pods
+The first step in debugging a Pod is taking a look at it. Check the current state of the Pod and recent events with the following command:
+
+kubectl describe pods ${POD_NAME}
+Look at the state of the containers in the pod. Are they all Running? Have there been recent restarts?
+
+Continue debugging depending on the state of the pods.
+
+My pod stays pending
+********************
+If a Pod is stuck in Pending it means that it can not be scheduled onto a node. Generally this is because there are insufficient resources of one type or another that prevent scheduling. Look at the output of the kubectl describe ... command above. There should be messages from the scheduler about why it can not schedule your pod. Reasons include:
+
+You don't have enough resources: You may have exhausted the supply of CPU or Memory in your cluster, in this case you need to delete Pods, adjust resource requests, or add new nodes to your cluster. See Compute Resources document for more information.
+
+You are using hostPort: When you bind a Pod to a hostPort there are a limited number of places that pod can be scheduled. In most cases, hostPort is unnecessary, try using a Service object to expose your Pod. If you do require hostPort then you can only schedule as many Pods as there are nodes in your Kubernetes cluster.
+
+My pod stays waiting
+********************
+If a Pod is stuck in the Waiting state, then it has been scheduled to a worker node, but it can't run on that machine. Again, the information from kubectl describe ... should be informative. The most common cause of Waiting pods is a failure to pull the image. There are three things to check:
+
+Make sure that you have the name of the image correct.
+Have you pushed the image to the repository?
+Run a manual docker pull <image> on your machine to see if the image can be pulled.
+My pod is crashing or otherwise unhealthy
+*****************************************
+Once your pod has been scheduled, the methods described in Debug Running Pods are available for debugging.
+
+My pod is running but not doing what I told it to do
+
+If your pod is not behaving as you expected, it may be that there was an error in your pod description (e.g. mypod.yaml file on your local machine), and that the error was silently ignored when you created the pod. Often a section of the pod description is nested incorrectly, or a key name is typed incorrectly, and so the key is ignored. For example, if you misspelled command as commnd then the pod will be created but will not use the command line you intended it to use.
+
+The first thing to do is to delete your pod and try creating it again with the --validate option. For example, run kubectl apply --validate -f mypod.yaml. If you misspelled command as commnd then will give an error like this:
+
+I0805 10:43:25.129850   46757 schema.go:126] unknown field: commnd
+I0805 10:43:25.129973   46757 schema.go:129] this may be a false alarm, see https://github.com/kubernetes/kubernetes/issues/6842
+pods/mypod
+The next thing to check is whether the pod on the apiserver matches the pod you meant to create (e.g. in a yaml file on your local machine). For example, run kubectl get pods/mypod -o yaml > mypod-on-apiserver.yaml and then manually compare the original pod description, mypod.yaml with the one you got back from apiserver, mypod-on-apiserver.yaml. There will typically be some lines on the "apiserver" version that are not on the original version. This is expected. However, if there are lines on the original that are not on the apiserver version, then this may indicate a problem with your pod spec.
+
+Debugging Replication Controllers
+*********************************
+Replication controllers are fairly straightforward. They can either create Pods or they can't. If they can't create pods, then please refer to the instructions above to debug your pods.
+
+kubectl describe rc ${CONTROLLER_NAME} to introspect events related to the replication controller.
+
+Debugging Services
+******************
+Services provide load balancing across a set of pods. There are several common problems that can make Services not work properly. The following instructions should help debug Service problems.
+
+First, verify that there are endpoints for the service. For every Service object, the apiserver makes an endpoints resource available.
+
+You can view this resource with:
+
+kubectl get endpoints ${SERVICE_NAME}
+
+Make sure that the endpoints match up with the number of pods that you expect to be members of your service.
+For example, if your Service is for an nginx container with 3 replicas, you would expect to see three different IP addresses in the Service's endpoints.
+
+My service is missing endpoints
+If you are missing endpoints, try listing pods using the labels that Service uses. Imagine that you have a Service where the labels are:
+
+...
+spec:
+  - selector:
+     name: nginx
+     type: frontend
+You can use:
+
+kubectl get pods --selector=name=nginx,type=frontend
+
+to list pods that match this selector. Verify that the list matches the Pods that you expect to provide your Service.
+
+If the list of pods matches expectations, but your endpoints are still empty, it's possible that you don't have the right ports exposed. If your service has a containerPort specified, but the Pods that are selected don't have that port listed, then they won't be added to the endpoints list.
+
+Verify that the pod's containerPort matches up with the Service's targetPort
+
+Network traffic is not forwarded
+If you can connect to the service, but the connection is immediately dropped, and there are endpoints in the endpoints list, it's likely that the proxy can't contact your pods.
+
+There are three things to check:
+
+Are your pods working correctly? Look for restart count, and debug pods.
+Can you connect to your pods directly? Get the IP address for the Pod, and try to connect directly to that IP.
+Is your application serving on the port that you configured? Kubernetes doesn't do port remapping, so if your application serves on 8080, the containerPort field needs to be 8080.
+What's next
+If none of the above solves your problem, follow the instructions in Debugging Service document to make sure that your Service is running, has Endpoints, and your Pods are actually serving; you have DNS working, iptables rules installed, and kube-proxy does not seem to be misbehaving.
+
+You may also visit troubleshooting document for more information.
+
+Fee
+23) how you will make sure that in rolling update strategy 2 pods are always available?
+Rolling updates allow Deployments' update to take place with zero downtime by incrementally updating Pods instances with new ones. The new Pods will be scheduled on Nodes with available resources. ... In Kubernetes, updates are versioned and any Deployment update can be reverted to a previous (stable) version.
+
+24) crashloopbackoff, what are the possible reasons?
+My kubernetes pods keep crashing with “CrashLoopBackOff” but I can't find any log
+docker run" I was able to run the image without any issue, only through kubernetes I got the crash.
+
+Can someone help me out, how can I debug without seeing any log?
+
+25) why you are using 3 master node in production?
+Kubernetes Cluster Management
+A highly available cluster is composed of at least 3 master nodes, each running a member of the etcd distributed database and all the Kubernetes master components (API, controller manager and scheduler). We choose an odd number of master nodes so that it’s possible to establish quorum. At least one instance of a master node is deployed per AZ. If the number of AZs is even, one additional master node is created to meet the odd number requirement. The worker nodes are then evenly spread across the given AZs. In the event one AZ fails, the cluster will continue to be available if the number of surviving masters is a majority of the original number of members. In order to maximize the odds of maintaining cluster availability after the loss of an AZ, it is recommended to deploy the cluster into a region that has at least 3 AZs.
+
+To create a highly available cluster, use the Platform9 Clarity UI to register a new Cloud Provider account, then create a cluster using that cloud provider.
+
+Follow the steps given below to create a highly available Kubernetes cluster in Platform9 Clarity UI.
+
+26) how you will make sure that pod should be running on a specific node?
+The pod affinity rule says that the pod can be scheduled onto a node only if that node is in the same zone as at least one already-running pod that
+ has a label with key "security" and value "S1"
+27) how to check what are the activities performed by the container while creating the pod
+
+28) how to get the ip of a pod ?
+To find the cluster IP address of a Kubernetes pod, use the kubectl get pod command on your local machine,
+with the option -o wide . This option will list more information, including the node the pod resides on,
+and the pod's cluster IP. The IP column will contain the internal cluster IP address for each pod
+
+29) which network plugin you are using?
+Using this CNI plugin allows Kubernetes pods to have the same IP address ... 
+You can use VNet security policies and routing to filter Pod traffic.
+
+30) how you are monitoring the kubernetes cluster and the containers
+The most straightforward solution to monitor your Kubernetes cluster is by using a combination of Heapster to collect metrics, 
+InfluxDB to store it in a time series database, and Grafana to present and aggregate the collected information.
+The Heapster GIT project has the files needed to deploy this design.
+
+31) Job should be terminated after 40 seconds ? ActiveDeadLineSeconds: 40
+
+kind: CronJob
+apiVersion: batch/v1beta1
+metadata:
+  name: mycronjob
+spec:
+  schedule: "*/1 * * * *"
+activeDeadlineSeconds: 200
+  jobTemplate:
+    metadata:
+      name: google-check-job
+    spec:
+      template:
+        metadata:
+          name: mypod
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: mycontainer
+             image: alpine
+             command: ["/bin/sh"]
+             args: ["-c", "ping -w 1 google.com"]
+ 
